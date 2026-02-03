@@ -3,6 +3,9 @@ import { auth } from '@/lib/auth/auth';
 import { connectDB } from '@/lib/db/connect';
 import { RiskProfile } from '@/lib/db/models/risk-profile.model';
 
+// Force Node.js runtime (uses mongoose)
+export const runtime = 'nodejs';
+
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) {

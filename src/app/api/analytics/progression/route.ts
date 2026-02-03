@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/auth';
 
+// Force Node.js runtime for auth
+export const runtime = 'nodejs';
+
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) {
