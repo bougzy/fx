@@ -7,6 +7,7 @@ import { User } from '@/lib/db/models/user.model';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
+  debug: process.env.NODE_ENV === 'development',
   providers: [
     Credentials({
       credentials: {
@@ -14,26 +15,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        try {
+          if (!credentials?.email || !credentials?.password) return null;
 
-        await connectDB();
-        const user = await User.findOne({ email: credentials.email }).select('+passwordHash');
-        if (!user || !user.passwordHash) return null;
+          await connectDB();
+          const user = await User.findOne({ email: credentials.email }).select('+passwordHash');
+          if (!user || !user.passwordHash) return null;
 
-        const isValid = await bcrypt.compare(credentials.password as string, user.passwordHash);
-        if (!isValid) return null;
+          const isValid = await bcrypt.compare(credentials.password as string, user.passwordHash);
+          if (!isValid) return null;
 
-        await User.updateOne({ _id: user._id }, { lastLoginAt: new Date() });
+          await User.updateOne({ _id: user._id }, { lastLoginAt: new Date() });
 
-        return {
-          id: user._id.toString(),
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          currentStage: user.currentStage,
-          behaviorScore: user.behaviorScore,
-          riskComplianceScore: user.riskComplianceScore,
-        };
+          return {
+            id: user._id.toString(),
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            currentStage: user.currentStage,
+            behaviorScore: user.behaviorScore,
+            riskComplianceScore: user.riskComplianceScore,
+          };
+        } catch (error) {
+          console.error('Auth error:', error);
+          return null;
+        }
       },
     }),
   ],
